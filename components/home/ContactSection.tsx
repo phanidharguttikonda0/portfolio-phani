@@ -24,23 +24,44 @@ export default function ContactSection() {
     bottleneck: '',
     message: '',
   });
+  const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(
-      `${formState.bottleneck || 'Project Inquiry'} — ${formState.company || formState.name}`
-    );
-    const body = encodeURIComponent(
-      `Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`
-    );
-    window.open(
-      `mailto:${IDENTITY.email}?subject=${subject}&body=${body}`,
-      '_blank'
-    );
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 4000);
+    setSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formState),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to dispatch request.');
+      }
+
+      setSubmitted(true);
+      setFormState({
+        name: '',
+        email: '',
+        company: '',
+        bottleneck: '',
+        message: '',
+      });
+      setTimeout(() => setSubmitted(false), 8000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to send request';
+      setErrorMessage(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -177,19 +198,53 @@ export default function ContactSection() {
               />
             </div>
 
+            {/* Error Banner */}
+            {errorMessage && (
+              <div className="p-3 rounded-lg bg-red-dim border border-red/30 text-xs font-mono text-red flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5 font-bold">
+                  <span>Failed to send: {errorMessage}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const subject = encodeURIComponent(`${formState.bottleneck || 'Project Inquiry'} — ${formState.name}`);
+                    const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`);
+                    window.open(`mailto:${IDENTITY.email}?subject=${subject}&body=${body}`, '_blank');
+                  }}
+                  className="text-[11px] text-white hover:underline text-left"
+                >
+                  Click here to send directly via your desktop/mobile email client →
+                </button>
+              </div>
+            )}
+
+            {/* Success Banner */}
+            {submitted && (
+              <div className="p-3.5 rounded-lg bg-accent-dim border border-accent/40 text-xs font-mono text-accent-text flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 shrink-0 text-accent" />
+                <span>Request dispatched directly to my inbox! I will reply within 24 hours.</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-3 rounded-lg bg-accent text-background font-bold text-sm hover:bg-accent-text transition-all shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
+              disabled={submitting || submitted}
+              className="w-full py-3.5 rounded-lg bg-accent text-background font-bold text-sm hover:bg-accent-text transition-all shadow-lg shadow-accent/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitted ? (
+              {submitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-background border-t-transparent rounded-full animate-spin" />
+                  <span>Transmitting to Inbox...</span>
+                </>
+              ) : submitted ? (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  Email Client Opened!
+                  <span>Dispatched to Phanidhar&apos;s Inbox!</span>
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Send Consultation Request
+                  <span>Send Consultation Request</span>
                 </>
               )}
             </button>
