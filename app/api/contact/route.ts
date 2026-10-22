@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const recipient = 'guttikondaphanidharreddy@gmail.com';
     const fromAddress =
-      process.env.RESEND_FROM_EMAIL || 'Portfolio Leads <onboarding@resend.dev>';
+      process.env.RESEND_FROM_EMAIL || 'Phanidhar Reddy <contact@phani.pro>';
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
