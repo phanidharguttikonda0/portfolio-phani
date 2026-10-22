@@ -27,12 +27,46 @@ export default function ContactSection() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setErrorMessage('');
+
+    // Field-level validation specifying exact missing fields
+    const missing: string[] = [];
+    const fieldsToHighlight: Record<string, boolean> = {};
+
+    if (!formState.name.trim()) {
+      missing.push('Your Name');
+      fieldsToHighlight['name'] = true;
+    }
+
+    if (!formState.email.trim()) {
+      missing.push('Work Email');
+      fieldsToHighlight['email'] = true;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formState.email.trim())) {
+        missing.push('Valid Email Address');
+        fieldsToHighlight['email'] = true;
+      }
+    }
+
+    if (!formState.message.trim()) {
+      missing.push('Project Overview & Timeline');
+      fieldsToHighlight['message'] = true;
+    }
+
+    if (missing.length > 0) {
+      setMissingFields(fieldsToHighlight);
+      setErrorMessage(`Please fill in the required field(s): ${missing.join(', ')}`);
+      return;
+    }
+
+    setSubmitting(true);
+    setMissingFields({});
 
     try {
       const res = await fetch('/api/contact', {
@@ -89,16 +123,20 @@ export default function ContactSection() {
               {/* Name */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-mono text-muted-dim flex items-center gap-1.5">
-                  <User className="w-3 h-3" /> Name
+                  <User className="w-3 h-3" /> Your Name *
                 </label>
                 <input
                   type="text"
                   value={formState.name}
-                  onChange={(e) =>
-                    setFormState({ ...formState, name: e.target.value })
-                  }
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-surface-200 border border-border-subtle text-sm text-white placeholder-muted-dark font-mono outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+                  onChange={(e) => {
+                    setFormState({ ...formState, name: e.target.value });
+                    setMissingFields((prev) => ({ ...prev, name: false }));
+                  }}
+                  className={`w-full px-3 py-2.5 rounded-lg bg-surface-200 text-sm text-white placeholder-muted-dark font-mono outline-none transition-all border ${
+                    missingFields.name
+                      ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                      : 'border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent/30'
+                  }`}
                   placeholder="Your name"
                 />
               </div>
@@ -106,25 +144,29 @@ export default function ContactSection() {
               {/* Email */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-mono text-muted-dim flex items-center gap-1.5">
-                  <Mail className="w-3 h-3" /> Work Email
+                  <Mail className="w-3 h-3" /> Work Email *
                 </label>
                 <input
                   type="email"
                   value={formState.email}
-                  onChange={(e) =>
-                    setFormState({ ...formState, email: e.target.value })
-                  }
-                  required
-                  className="w-full px-3 py-2.5 rounded-lg bg-surface-200 border border-border-subtle text-sm text-white placeholder-muted-dark font-mono outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
+                  onChange={(e) => {
+                    setFormState({ ...formState, email: e.target.value });
+                    setMissingFields((prev) => ({ ...prev, email: false }));
+                  }}
+                  className={`w-full px-3 py-2.5 rounded-lg bg-surface-200 text-sm text-white placeholder-muted-dark font-mono outline-none transition-all border ${
+                    missingFields.email
+                      ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                      : 'border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent/30'
+                  }`}
                   placeholder="you@company.com"
                 />
               </div>
             </div>
 
-            {/* Company */}
+            {/* Company / LinkedIn */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-mono text-muted-dim flex items-center gap-1.5">
-                <Building className="w-3 h-3" /> Company / Project URL
+                <Building className="w-3 h-3" /> Company, Project URL, or LinkedIn Profile
               </label>
               <input
                 type="text"
@@ -133,7 +175,7 @@ export default function ContactSection() {
                   setFormState({ ...formState, company: e.target.value })
                 }
                 className="w-full px-3 py-2.5 rounded-lg bg-surface-200 border border-border-subtle text-sm text-white placeholder-muted-dark font-mono outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all"
-                placeholder="https://yourcompany.com"
+                placeholder="e.g. linkedin.com/in/... or your company website (optional)"
               />
             </div>
 
@@ -185,36 +227,44 @@ export default function ContactSection() {
             {/* Message */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-mono text-muted-dim flex items-center gap-1.5">
-                <MessageSquare className="w-3 h-3" /> Project Overview & Timeline
+                <MessageSquare className="w-3 h-3" /> Project Overview & Timeline *
               </label>
               <textarea
                 value={formState.message}
-                onChange={(e) =>
-                  setFormState({ ...formState, message: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormState({ ...formState, message: e.target.value });
+                  setMissingFields((prev) => ({ ...prev, message: false }));
+                }}
                 rows={4}
-                className="w-full px-3 py-2.5 rounded-lg bg-surface-200 border border-border-subtle text-sm text-white placeholder-muted-dark font-mono outline-none focus:border-accent focus:ring-1 focus:ring-accent/30 transition-all resize-none"
+                className={`w-full px-3 py-2.5 rounded-lg bg-surface-200 text-sm text-white placeholder-muted-dark font-mono outline-none transition-all resize-none border ${
+                  missingFields.message
+                    ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                    : 'border-border-subtle focus:border-accent focus:ring-1 focus:ring-accent/30'
+                }`}
                 placeholder="Describe your project, current stack, and timeline..."
               />
             </div>
 
             {/* Error Banner */}
             {errorMessage && (
-              <div className="p-3 rounded-lg bg-red-dim border border-red/30 text-xs font-mono text-red flex flex-col gap-1.5">
-                <div className="flex items-center gap-1.5 font-bold">
-                  <span>Failed to send: {errorMessage}</span>
+              <div className="p-3.5 rounded-lg bg-red-dim border border-red/40 text-xs font-mono text-red flex flex-col gap-1.5">
+                <div className="flex items-center gap-2 font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red shrink-0" />
+                  <span>{errorMessage}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const subject = encodeURIComponent(`${formState.bottleneck || 'Project Inquiry'} — ${formState.name}`);
-                    const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`);
-                    window.open(`mailto:${IDENTITY.email}?subject=${subject}&body=${body}`, '_blank');
-                  }}
-                  className="text-[11px] text-white hover:underline text-left"
-                >
-                  Click here to send directly via your desktop/mobile email client →
-                </button>
+                {!errorMessage.startsWith('Please fill') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const subject = encodeURIComponent(`${formState.bottleneck || 'Project Inquiry'} — ${formState.name}`);
+                      const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`);
+                      window.open(`mailto:${IDENTITY.email}?subject=${subject}&body=${body}`, '_blank');
+                    }}
+                    className="text-[11px] text-white hover:underline text-left cursor-pointer"
+                  >
+                    Click here to send directly via your desktop/mobile email client →
+                  </button>
+                )}
               </div>
             )}
 

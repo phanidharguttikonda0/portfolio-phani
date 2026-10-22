@@ -39,12 +39,46 @@ export default function ContactModal({
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [missingFields, setMissingFields] = useState<Record<string, boolean>>({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setErrorMessage('');
+
+    // Granular field-level validation
+    const missing: string[] = [];
+    const fieldsToHighlight: Record<string, boolean> = {};
+
+    if (!formState.name.trim()) {
+      missing.push('Your Name');
+      fieldsToHighlight['name'] = true;
+    }
+
+    if (!formState.email.trim()) {
+      missing.push('Work Email');
+      fieldsToHighlight['email'] = true;
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formState.email.trim())) {
+        missing.push('Valid Email Address');
+        fieldsToHighlight['email'] = true;
+      }
+    }
+
+    if (!formState.message.trim()) {
+      missing.push('Project Overview & Timeline');
+      fieldsToHighlight['message'] = true;
+    }
+
+    if (missing.length > 0) {
+      setMissingFields(fieldsToHighlight);
+      setErrorMessage(`Please fill in the required field(s): ${missing.join(', ')}`);
+      return;
+    }
+
+    setSubmitting(true);
+    setMissingFields({});
 
     try {
       const res = await fetch('/api/contact', {
@@ -141,13 +175,17 @@ export default function ContactModal({
                   </label>
                   <input
                     type="text"
-                    required
                     placeholder="Alex Vance"
                     value={formState.name}
-                    onChange={(e) =>
-                      setFormState({ ...formState, name: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-surface-200 border border-border-base text-white text-xs font-mono focus:outline-none focus:border-accent"
+                    onChange={(e) => {
+                      setFormState({ ...formState, name: e.target.value });
+                      setMissingFields((prev) => ({ ...prev, name: false }));
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-lg bg-surface-200 text-white text-xs font-mono outline-none transition-all border ${
+                      missingFields.name
+                        ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                        : 'border-border-base focus:border-accent'
+                    }`}
                   />
                 </div>
 
@@ -158,26 +196,30 @@ export default function ContactModal({
                   </label>
                   <input
                     type="email"
-                    required
                     placeholder="alex@company.com"
                     value={formState.email}
-                    onChange={(e) =>
-                      setFormState({ ...formState, email: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-surface-200 border border-border-base text-white text-xs font-mono focus:outline-none focus:border-accent"
+                    onChange={(e) => {
+                      setFormState({ ...formState, email: e.target.value });
+                      setMissingFields((prev) => ({ ...prev, email: false }));
+                    }}
+                    className={`w-full px-3.5 py-2.5 rounded-lg bg-surface-200 text-white text-xs font-mono outline-none transition-all border ${
+                      missingFields.email
+                        ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                        : 'border-border-base focus:border-accent'
+                    }`}
                   />
                 </div>
               </div>
 
-              {/* Company / URL */}
+              {/* Company / LinkedIn */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-mono text-muted-light flex items-center gap-1">
                   <Building className="w-3.5 h-3.5 text-muted-dim" />
-                  Company / Project URL
+                  Company, Project URL, or LinkedIn Profile
                 </label>
                 <input
                   type="text"
-                  placeholder="https://yourcompany.io"
+                  placeholder="e.g. linkedin.com/in/... or your company website (optional)"
                   value={formState.company}
                   onChange={(e) =>
                     setFormState({ ...formState, company: e.target.value })
@@ -223,36 +265,44 @@ export default function ContactModal({
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-mono text-muted-light flex items-center gap-1">
                   <MessageSquare className="w-3.5 h-3.5 text-muted-dim" />
-                  Project Overview & Timeline
+                  Project Overview & Timeline *
                 </label>
                 <textarea
                   rows={3}
                   placeholder="Briefly describe your current stack, traffic load, or upcoming infrastructure milestones..."
                   value={formState.message}
-                  onChange={(e) =>
-                    setFormState({ ...formState, message: e.target.value })
-                  }
-                  className="w-full px-3.5 py-2.5 rounded-lg bg-surface-200 border border-border-base text-white text-xs font-mono focus:outline-none focus:border-accent resize-none"
+                  onChange={(e) => {
+                    setFormState({ ...formState, message: e.target.value });
+                    setMissingFields((prev) => ({ ...prev, message: false }));
+                  }}
+                  className={`w-full px-3.5 py-2.5 rounded-lg bg-surface-200 text-white text-xs font-mono outline-none transition-all resize-none border ${
+                    missingFields.message
+                      ? 'border-red ring-1 ring-red/50 bg-red-dim/20'
+                      : 'border-border-base focus:border-accent'
+                  }`}
                 />
               </div>
 
               {/* Error Banner */}
               {errorMessage && (
-                <div className="p-3 rounded-lg bg-red-dim border border-red/30 text-xs font-mono text-red flex flex-col gap-1.5">
-                  <div className="flex items-center gap-1.5 font-bold">
-                    <span>Failed to send: {errorMessage}</span>
+                <div className="p-3.5 rounded-lg bg-red-dim border border-red/40 text-xs font-mono text-red flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2 font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red shrink-0" />
+                    <span>{errorMessage}</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const subject = encodeURIComponent(`[${formState.bottleneck}] Technical Consultation — ${formState.name}`);
-                      const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`);
-                      window.open(`mailto:${IDENTITY.email}?subject=${subject}&body=${body}`, '_blank');
-                    }}
-                    className="text-[11px] text-white hover:underline text-left cursor-pointer"
-                  >
-                    Send directly via your desktop/mobile email client →
-                  </button>
+                  {!errorMessage.startsWith('Please fill') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const subject = encodeURIComponent(`[${formState.bottleneck}] Technical Consultation — ${formState.name}`);
+                        const body = encodeURIComponent(`Name: ${formState.name}\nEmail: ${formState.email}\nCompany: ${formState.company}\nBottleneck: ${formState.bottleneck}\n\n${formState.message}`);
+                        window.open(`mailto:${IDENTITY.email}?subject=${subject}&body=${body}`, '_blank');
+                      }}
+                      className="text-[11px] text-white hover:underline text-left cursor-pointer"
+                    >
+                      Send directly via your desktop/mobile email client →
+                    </button>
+                  )}
                 </div>
               )}
 
