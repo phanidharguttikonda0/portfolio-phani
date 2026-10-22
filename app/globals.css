@@ -1,0 +1,168 @@
+@import "tailwindcss";
+
+/* ===== DESIGN SYSTEM TOKENS ===== */
+@theme inline {
+  --color-background: #0b1110;
+  --color-foreground: #e1ece5;
+
+  --color-surface-50: #15221c;
+  --color-surface-100: #111a16;
+  --color-surface-200: #0d1512;
+  --color-surface-300: #070c0a;
+
+  --color-border-subtle: #182720;
+  --color-border-base: #22352b;
+  --color-border-highlight: #345041;
+
+  --color-accent: #10b981;
+  --color-accent-dim: rgba(16, 185, 129, 0.12);
+  --color-accent-glow: rgba(16, 185, 129, 0.35);
+  --color-accent-text: #34d399;
+
+  --color-blue: #3b82f6;
+  --color-blue-dim: rgba(59, 130, 246, 0.12);
+  --color-blue-text: #93c5fd;
+
+  --color-red: #ef4444;
+  --color-red-dim: rgba(239, 68, 68, 0.12);
+
+  --color-amber: #f59e0b;
+  --color-amber-dim: rgba(245, 158, 11, 0.12);
+
+  --color-purple: #a855f7;
+  --color-purple-dim: rgba(168, 85, 247, 0.12);
+
+  --color-muted: #8ca396;
+  --color-muted-light: #a1b8ac;
+  --color-muted-dim: #718b7e;
+  --color-muted-dark: #455a50;
+
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+}
+
+/* ===== BASE STYLES ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #22352b #0b1110;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0b1110;
+  color: #e1ece5;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== SCANLINE OVERLAY ===== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(16, 185, 129, 0.015) 2px,
+    rgba(16, 185, 129, 0.015) 4px
+  );
+}
+
+/* ===== GLASSMORPHIC PANEL ===== */
+.glass-panel {
+  background: rgba(17, 26, 22, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #22352b;
+}
+
+/* ===== GLOW EFFECTS ===== */
+.glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15),
+              0 0 40px rgba(16, 185, 129, 0.05);
+}
+
+.glow-emerald-strong {
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.25),
+              0 0 60px rgba(16, 185, 129, 0.1);
+}
+
+/* ===== PULSE ANIMATION ===== */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ===== TYPING CURSOR ===== */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ===== GRADIENT TEXT ===== */
+.gradient-text {
+  background: linear-gradient(135deg, #10b981, #34d399, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== TERMINAL STYLES ===== */
+.terminal-bg {
+  background: linear-gradient(180deg, #070c0a 0%, #0d1512 100%);
+  border: 1px solid #1a2d22;
+}
+
+/* ===== CARD HOVER ===== */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  border-color: #345041;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== SCROLLBAR STYLES ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b1110;
+}
+::-webkit-scrollbar-thumb {
+  background: #22352b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #345041;
+}
+
+/* ===== COUNTER ANIMATION ===== */
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
